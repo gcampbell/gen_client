@@ -236,7 +236,10 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({send_packet, Packet}, #client_state{session = Session} = State) ->
-	io:format("Outgoing:~p~n", [exmpp_xml:document_to_list(Packet)]),
+	case is_debug(State) of
+		true -> io:format("Outgoing:~p~n", [exmpp_xml:document_to_list(Packet)]);
+		false -> ok
+	end,
 	spawn(fun() -> exmpp_session:send_packet(Session, Packet) end),
 	{noreply, State};	
 
@@ -476,3 +479,6 @@ get_xml(Packet) ->
 
 log_error(Reason) ->
 	io:format("Error: ~p~n", [Reason]).
+
+is_debug(#client_state{handlers = Handlers}) ->
+	orddict:is_key({?SYSTEM_HANDLER, ?LOGGER_KEY}, Handlers).
